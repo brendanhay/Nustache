@@ -8,11 +8,13 @@ namespace Nustache.Core
 {
     public abstract class ValueGetter
     {
+        public static NamingConvention NameConvention { get; set; }
+
         #region Static helper methods
 
         public static object GetValue(object target, string name)
         {
-            return GetValueGetter(target, name).GetValue();
+            return GetValueGetter(target, FormatName(name)).GetValue();
         }
 
         private static ValueGetter GetValueGetter(object target, string name)
@@ -24,6 +26,25 @@ namespace Nustache.Core
                 ?? PropertyInfoValueGetter.GetPropertyInfoValueGetter(target, name)
                 ?? FieldInfoValueGetter.GetFieldInfoValueGetter(target, name)
                 ?? (ValueGetter)new NullValueGetter();
+        }
+
+        private static string FormatName(string name)
+        {
+            switch (NameConvention) {
+                case NamingConvention.None:
+                    break;
+                case NamingConvention.PascalCased:
+                    name = Inflector.Pascalize(name);
+                    break;
+                case NamingConvention.CamelCased:
+                    name = Inflector.Camelize(name);
+                    break;
+                case NamingConvention.Underscored:
+                    name = Inflector.Underscore(name);
+                    break;
+            }
+
+            return name;
         }
 
         #endregion
@@ -45,15 +66,12 @@ namespace Nustache.Core
     {
         internal static PropertyDescriptorValueGetter GetPropertyDescriptorValueGetter(object target, string name)
         {
-            if (target is ICustomTypeDescriptor)
-            {
+            if (target is ICustomTypeDescriptor) {
                 var typeDescriptor = (ICustomTypeDescriptor)target;
                 PropertyDescriptorCollection properties = typeDescriptor.GetProperties();
 
-                foreach (PropertyDescriptor property in properties)
-                {
-                    if (property.Name ==  name)
-                    {
+                foreach (PropertyDescriptor property in properties) {
+                    if (property.Name == name) {
                         return new PropertyDescriptorValueGetter(target, property);
                     }
                 }
@@ -83,10 +101,8 @@ namespace Nustache.Core
         {
             MemberInfo[] methods = target.GetType().GetMember(name, MemberTypes.Method, DefaultBindingFlags);
 
-            foreach (MethodInfo method in methods)
-            {
-                if (MethodCanGetValue(method))
-                {
+            foreach (MethodInfo method in methods) {
+                if (MethodCanGetValue(method)) {
                     return new MethodInfoValueGetter(target, method);
                 }
             }
@@ -121,8 +137,7 @@ namespace Nustache.Core
         {
             PropertyInfo property = target.GetType().GetProperty(name, DefaultBindingFlags);
 
-            if (property != null && PropertyCanGetValue(property))
-            {
+            if (property != null && PropertyCanGetValue(property)) {
                 return new PropertyInfoValueGetter(target, property);
             }
 
@@ -155,8 +170,7 @@ namespace Nustache.Core
         {
             FieldInfo field = target.GetType().GetField(name, DefaultBindingFlags);
 
-            if (field != null)
-            {
+            if (field != null) {
                 return new FieldInfoValueGetter(target, field);
             }
 
@@ -182,12 +196,10 @@ namespace Nustache.Core
     {
         internal static DictionaryValueGetter GetDictionaryValueGetter(object target, string name)
         {
-            if (target is IDictionary)
-            {
+            if (target is IDictionary) {
                 var dictionary = (IDictionary)target;
 
-                if (dictionary.Contains(name))
-                {
+                if (dictionary.Contains(name)) {
                     return new DictionaryValueGetter(dictionary, name);
                 }
             }
@@ -216,24 +228,20 @@ namespace Nustache.Core
         {
             Type dictionaryType = null;
 
-            foreach (var interfaceType in target.GetType().GetInterfaces())
-            {
+            foreach (var interfaceType in target.GetType().GetInterfaces()) {
                 if (interfaceType.IsGenericType &&
                     interfaceType.GetGenericTypeDefinition() == typeof(IDictionary<,>) &&
-                    interfaceType.GetGenericArguments()[0] == typeof(string))
-                {
+                    interfaceType.GetGenericArguments()[0] == typeof(string)) {
                     dictionaryType = interfaceType;
 
                     break;
                 }
             }
 
-            if (dictionaryType != null)
-            {
+            if (dictionaryType != null) {
                 var containsKeyMethod = dictionaryType.GetMethod("ContainsKey");
 
-                if ((bool)containsKeyMethod.Invoke(target, new object[] { name }))
-                {
+                if ((bool)containsKeyMethod.Invoke(target, new object[] { name })) {
                     return new GenericDictionaryValueGetter(target, name, dictionaryType);
                 }
             }
