@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -57,16 +57,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Conventions\NamingConventionFactory.cs" />
+    <Compile Include="Conventions\INamingConvention.cs" />
     <Compile Include="FileSystemTemplateLocator.cs" />
     <Compile Include="Inflector.cs" />
-    <Compile Include="NamingConvention.cs" />
+    <Compile Include="Conventions\NamingConvention.cs" />
     <Compile Include="Section.cs" />
     <Compile Include="TemplateDefinition.cs" />
     <Compile Include="Render.cs" />
     <Compile Include="RenderContext.cs" />
     <Compile Include="EndSection.cs" />
     <Compile Include="LiteralText.cs" />
-    <Compile Include="NamingConvention.cs" />
     <Compile Include="NustacheException.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Part.cs" />
@@ -76,7 +77,17 @@
     <Compile Include="Template.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TemplateInclude.cs" />
-    <Compile Include="ValueGetter.cs" />
+    <Compile Include="ValueProviders\IValueProviderCollection.cs" />
+    <Compile Include="ValueProviders\MethodInfoValueProviderFactory.cs" />
+    <Compile Include="ValueProviders\PropertyInfoValueProviderFactory.cs" />
+    <Compile Include="ValueProviders\DictionaryValueProviderFactory.cs" />
+    <Compile Include="ValueProviders\FieldInfoValueProviderFactory.cs" />
+    <Compile Include="ValueProviders\GenericDictionaryValueProvider.cs" />
+    <Compile Include="ValueProviders\IValueProvider.cs" />
+    <Compile Include="ValueProviders\IValueProviderFactory.cs" />
+    <Compile Include="ValueProviders\PropertyDescriptorValueProviderFactory.cs" />
+    <Compile Include="ValueProviders\ValueProviderFactory.cs" />
+    <Compile Include="ValueProviders\ValueProviderCollection.cs" />
     <Compile Include="VariableReference.cs" />
   </ItemGroup>
   <ItemGroup>

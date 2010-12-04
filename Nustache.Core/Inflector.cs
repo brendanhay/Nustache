@@ -172,7 +172,12 @@ namespace Nustache.Core
             return Uncapitalize(Pascalize(lowercaseAndUnderscoredWord));
         }
 
-        public static string Underscore(string pascalCasedWord, bool pluralize = false)
+        public static string Underscore(string pascalCasedWord)
+        {
+            return Underscore(pascalCasedWord, false);
+        }
+
+        public static string Underscore(string pascalCasedWord, bool pluralize)
         {
             var underscored = Regex.Replace(Regex.Replace(Regex.Replace(pascalCasedWord, @"([A-Z]+)([A-Z][a-z])", "$1_$2"),
                 @"([a-z\d])([A-Z])", "$1_$2"), @"[-\s]", "_").ToLower();

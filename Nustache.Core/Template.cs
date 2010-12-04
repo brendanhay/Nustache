@@ -1,5 +1,6 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
+using Nustache.Core.Conventions;
+using Nustache.Core.ValueProviders;
 
 namespace Nustache.Core
 {
@@ -42,7 +43,27 @@ namespace Nustache.Core
         /// </remarks>
         public void Render(object data, TextWriter writer, TemplateLocator templateLocator)
         {
-            var context = new RenderContext(this, data, writer, templateLocator);
+            Render(data, writer, templateLocator, NamingConventionFactory.Default);
+        }
+
+        public void Render(object data, TextWriter writer, TemplateLocator templateLocator,
+            NamingConvention namingConvention)
+        {
+            Render(data, writer, templateLocator,
+                NamingConventionFactory.Create(namingConvention));
+        }
+
+        public void Render(object data, TextWriter writer, TemplateLocator templateLocator,
+            INamingConvention namingConvention)
+        {
+            Render(data, writer, templateLocator,
+                new ValueProviderCollection(namingConvention));
+        }
+
+        public void Render(object data, TextWriter writer, TemplateLocator templateLocator,
+            IValueProviderCollection valueProviders)
+        {
+            var context = new RenderContext(this, data, writer, templateLocator, valueProviders);
 
             Render(context);
 

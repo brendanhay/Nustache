@@ -1,7 +1,7 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Nustache.Core.ValueProviders;
 
 namespace Nustache.Core
 {
@@ -10,38 +10,40 @@ namespace Nustache.Core
     public class RenderContext
     {
         private const int IncludeLimit = 1024;
+
         private readonly Stack<Section> _sectionStack = new Stack<Section>();
         private readonly Stack<object> _dataStack = new Stack<object>();
         private readonly TextWriter _writer;
         private readonly TemplateLocator _templateLocator;
+        private readonly IValueProviderCollection _valueProviders;
+
         private int _includeLevel;
 
         public RenderContext(Section section, object data, TextWriter writer, TemplateLocator templateLocator)
+            : this(section, data, writer, templateLocator, new ValueProviderCollection()) { }
+
+        public RenderContext(Section section, object data, TextWriter writer, TemplateLocator templateLocator,
+            IValueProviderCollection valueProviders)
         {
             _sectionStack.Push(section);
             _dataStack.Push(data);
             _writer = writer;
             _templateLocator = templateLocator;
+            _valueProviders = valueProviders;
             _includeLevel = 0;
         }
 
         public object GetValue(string name)
         {
-            if (name == ".")
-            {
+            if (name == ".") {
                 return _dataStack.Peek();
             }
 
-            foreach (var data in _dataStack)
-            {
-                if (data != null)
-                {
-                    var value = ValueGetter.GetValue(data, name);
+            foreach (var data in _dataStack) {
+                object value;
 
-                    if (value != null)
-                    {
-                        return value;
-                    }
+                if (data != null && _valueProviders.TryGetValue(data, name, out value)) {
+                    return value;
                 }
             }
 
@@ -52,22 +54,15 @@ namespace Nustache.Core
         {
             object value = GetValue(name);
 
-            if (value is bool)
-            {
-                if ((bool)value)
-                {
+            if (value is bool) {
+                if ((bool)value) {
                     yield return value;
                 }
-            }
-            else if (value is IEnumerable && !(value is string))
-            {
-                foreach (var item in ((IEnumerable)value))
-                {
+            } else if (value is IEnumerable && !(value is string)) {
+                foreach (var item in ((IEnumerable)value)) {
                     yield return item;
                 }
-            }
-            else if (value != null)
-            {
+            } else if (value != null) {
                 yield return value;
             }
         }
@@ -79,8 +74,7 @@ namespace Nustache.Core
 
         public void Include(string templateName)
         {
-            if (_includeLevel >= IncludeLimit)
-            {
+            if (_includeLevel >= IncludeLimit) {
                 throw new NustacheException(
                     string.Format("You have reached the include limit of {0}. Are you trying to render infinitely recursive templates or data?", IncludeLimit));
             }
@@ -89,12 +83,9 @@ namespace Nustache.Core
 
             TemplateDefinition templateDefinition = GetTemplateDefinition(templateName);
 
-            if (templateDefinition != null)
-            {
+            if (templateDefinition != null) {
                 templateDefinition.Render(this);
-            }
-            else if (_templateLocator != null)
-            {
+            } else if (_templateLocator != null) {
                 var template = _templateLocator(templateName);
                 template.Render(this);
             }
@@ -104,12 +95,10 @@ namespace Nustache.Core
 
         private TemplateDefinition GetTemplateDefinition(string name)
         {
-            foreach (var section in _sectionStack)
-            {
+            foreach (var section in _sectionStack) {
                 var templateDefinition = section.GetTemplateDefinition(name);
 
-                if (templateDefinition != null)
-                {
+                if (templateDefinition != null) {
                     return templateDefinition;
                 }
             }

@@ -1,17 +1,13 @@
 ﻿using System;
 using NUnit.Framework;
+using Nustache.Core.Conventions;
+using Nustache.Core.ValueProviders;
 
 namespace Nustache.Core.Tests
 {
     [TestFixture]
     public class Describe_NamingConvention
     {
-        [TestFixtureTearDown]
-        public void TearDown()
-        {
-            ValueGetter.NameConvention = NamingConvention.None;
-        }
-
         [Test]
         public void Any_name_gets_pascalcased_field_values()
         {
@@ -41,11 +37,14 @@ namespace Nustache.Core.Tests
 
         private static void AssertGetValue<T>(T target, string name) where T : Target
         {
-            ValueGetter.NameConvention = target.NameConvention;
+            var providers = new ValueProviderCollection(target.NameConvention);
+            var message = string.Format("Couldn't retrieve name: '{0}', from type: '{1}'",
+                name, target.GetType().Name);
 
-            Assert.AreEqual(target.Expected, ValueGetter.GetValue(target, name),
-                string.Format("Couldn't retrieve name: '{1}', from type: '{0}'",
-                target.GetType().Name, name));
+            object result;
+
+            Assert.IsTrue(providers.TryGetValue(target, name, out result), message);
+            Assert.AreEqual(target.Expected, result);
         }
 
         #endregion
